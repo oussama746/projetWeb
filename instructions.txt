@@ -1,0 +1,102 @@
+1. Modèles (models.py)
+Modèle User (ou Profils Utilisateurs) :
+
+Mettre en place un mécanisme de permissions (via les Groupes Django ou des champs personnalisés) pour distinguer et vérifier les rôles : Étudiant, Responsable des stages, et Administrateur.
+
+
+Modèle StageOffer (Offre de Stage) :
+
+Créer les champs pour les informations minimales : Organisme, Nom/Prénom du contact, Email du contact, Date/Heure de dépôt, Titre du stage, Détail du stage.
+
+Créer le champ état avec un choix limité aux valeurs : 'En attente validation', 'Validée', 'Refusée', 'Clôturée'.
+
+Définir l'état par défaut à 'En attente validation'.
+
+Modèle Candidature :
+
+Créer une clé étrangère vers l'offre de stage (StageOffer) et vers l'utilisateur (User - Étudiant).
+
+
+
+Enregistrer la date_candidature (date et heure).
+
+
+Appliquer une contrainte unique_together entre l'étudiant et l'offre pour garantir une seule candidature par étudiant par offre.
+
+2. Vues (views.py)
+2.1. Vue pour l'Entreprise (Dépôt)
+Implémenter une vue non authentifiée (CreateView ou fonction) pour permettre le dépôt d'une demande de stage sans identification ni mot de passe.
+
+Assurer que l'offre est enregistrée avec l'état "En attente validation".
+
+2.2. Vues pour le Responsable de Stage
+Appliquer les décorateurs/mixins nécessaires pour exiger l'identification et le rôle (Responsable).
+
+
+
+Implémenter une vue pour lister uniquement les offres dont l'état est "En attente validation".
+
+
+Permettre la consultation du détail d'une offre.
+
+Permettre d'effectuer une recherche sur toutes les offres.
+
+Créer une fonction pour Valider ou Refuser une offre, ce qui modifie son état.
+
+
+2.3. Vues pour l'Étudiant
+Appliquer les décorateurs/mixins nécessaires pour exiger l'identification et le rôle (Étudiant).
+
+
+
+Implémenter une vue pour lister les offres en cours (celles dont l'état est "Validée"). Les offres "Clôturées" ne doivent pas apparaître.
+
+
+
+Permettre d'effectuer une recherche sur les offres.
+
+Permettre la consultation du détail d'une offre.
+
+Logique de Candidature (Fonction Critique) :
+
+Vérifier si l'offre n'a pas atteint le maximum de 5 candidatures.
+
+Si le maximum n'est pas atteint, enregistrer la candidature (avec date et heure).
+
+
+Si, après l'enregistrement, le nombre de candidatures atteint 5, mettre à jour l'état de l'offre à "Clôturée" automatiquement.
+
+2.4. Vues pour l'Administrateur
+Appliquer les décorateurs/mixins nécessaires pour exiger l'identification et le rôle (Administrateur).
+
+
+
+Permettre la liste, la recherche, et la consultation du détail des offres (similaire au Responsable).
+
+Créer une fonction pour changer l'état de n'importe quelle offre, y compris si elle est déjà clôturée.
+
+Tableau de Bord Statistique (avec Chart.js) :
+
+Implémenter une vue pour calculer les indicateurs clés : nombre d'offres reçues, nombre d'offres en cours, etc.
+
+Effectuer une agrégation des données (ex: TruncMonth) pour obtenir le nombre de candidatures reçues par mois sur les 12 derniers mois.
+
+Rendre le template en fournissant les données structurées pour être utilisées par Chart.js pour l'affichage visuel.
+
+
+3. URLs (urls.py)
+Définir des chemins URL clairs pour l'authentification (login, logout).
+
+
+
+Définir un chemin URL pour le dépôt d'offre par l'entreprise (non authentifié).
+
+Définir des chemins distincts et sécurisés pour les actions spécifiques du Responsable (liste en attente, changement d'état).
+
+
+Définir des chemins distincts et sécurisés pour les actions de l'Étudiant (liste en cours, candidater).
+
+
+Définir des chemins sécurisés pour l'Administrateur (tableau de bord, gestion des états).
+
+Utiliser des paramètres dynamiques (<int:pk>, <str:nouvel_etat>) pour les vues de détail et d'action.
