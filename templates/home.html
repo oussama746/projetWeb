@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1>Bienvenue sur la plateforme de gestion des stages</h1>
+    <p class="lead">Connectez-vous pour accéder à votre espace.</p>
+    <hr class="my-4">
+    <p>Vous êtes une entreprise ?</p>
+    <a class="btn btn-primary btn-lg" href="{% url 'company_offer_create' %}" role="button">Déposer une offre</a>
+</div>
+{% endblock %}

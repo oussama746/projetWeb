@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="alert alert-success">
+    <h4 class="alert-heading">Offre enregistrée !</h4>
+    <p>Votre offre de stage a été enregistrée avec succès. Elle est actuellement en attente de validation par un responsable.</p>
+    <hr>
+    <p class="mb-0"><a href="{% url 'home' %}">Retour à l'accueil</a></p>
+</div>
+{% endblock %}

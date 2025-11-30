@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Gestion de toutes les offres (Admin)</h2>
+
+<form method="get" class="mb-3 d-flex">
+    <input type="text" name="q" class="form-control me-2" placeholder="Rechercher..." value="{{ request.GET.q }}">
+    <button type="submit" class="btn btn-outline-primary">Rechercher</button>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Titre</th>
+                <th>Organisme</th>
+                <th>Date</th>
+                <th>État</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for offer in offers %}
+            <tr>
+                <td>{{ offer.title }}</td>
+                <td>{{ offer.organisme }}</td>
+                <td>{{ offer.date_depot|date:"d/m/Y" }}</td>
+                <td>
+                    <span class="badge 
+                        {% if offer.state == 'Validée' %}bg-success
+                        {% elif offer.state == 'Refusée' %}bg-danger
+                        {% elif offer.state == 'Clôturée' %}bg-secondary
+                        {% else %}bg-warning{% endif %}">
+                        {{ offer.state }}
+                    </span>
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'admin_change_state' offer.pk 'Validée' %}" class="btn btn-sm btn-outline-success">Valider</a>
+                        <a href="{% url 'admin_change_state' offer.pk 'Refusée' %}" class="btn btn-sm btn-outline-danger">Refuser</a>
+                        <a href="{% url 'admin_change_state' offer.pk 'Clôturée' %}" class="btn btn-sm btn-outline-secondary">Clôturer</a>
+                        <a href="{% url 'admin_change_state' offer.pk 'En attente validation' %}" class="btn btn-sm btn-outline-warning">Mettre en attente</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">Aucune offre trouvée.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

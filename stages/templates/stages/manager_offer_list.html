@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Offres en attente de validation</h2>
+
+<form method="get" class="mb-3 d-flex">
+    <input type="text" name="q" class="form-control me-2" placeholder="Rechercher..." value="{{ request.GET.q }}">
+    <button type="submit" class="btn btn-outline-primary">Rechercher</button>
+</form>
+
+<div class="list-group">
+    {% for offer in offers %}
+        <a href="{% url 'manager_offer_detail' offer.pk %}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">{{ offer.title }}</h5>
+                <small>{{ offer.date_depot|date:"d/m/Y" }}</small>
+            </div>
+            <p class="mb-1">{{ offer.organisme }}</p>
+            <small>Contact: {{ offer.contact_name }}</small>
+        </a>
+    {% empty %}
+        <p>Aucune offre en attente.</p>
+    {% endfor %}
+</div>
+{% endblock %}

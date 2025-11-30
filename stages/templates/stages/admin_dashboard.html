@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Tableau de Bord Administrateur</h2>
+        <div>
+            <a href="{% url 'admin_user_list' %}" class="btn btn-warning me-2">Gérer les Utilisateurs</a>
+            <a href="{% url 'admin_offer_list' %}" class="btn btn-primary">Gérer les Offres</a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-header">Total Offres</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ total_offers }}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-header">En Attente</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ pending_offers }}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-header">Validées</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ validated_offers }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Candidatures sur les 12 derniers mois</div>
+    <div class="card-body">
+        <canvas id="candidaturesChart"></canvas>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('candidaturesChart').getContext('2d');
+    const chartData = {
+        labels: {{ chart_labels|safe }},
+        datasets: [{
+            label: 'Nombre de candidatures',
+            data: {{ chart_data|safe }},
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    const myChart = new Chart(ctx, {
+        type: 'bar',
+        data: chartData,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
