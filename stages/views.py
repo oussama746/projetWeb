@@ -40,11 +40,23 @@ def register(request):
     return render(request, 'registration/register.html', {'form': form})
 
 # 2.1 Vue pour l'Entreprise (Dépôt)
-class CompanyOfferCreateView(CreateView):
+class CompanyOfferCreateView(UserPassesTestMixin, CreateView):
     model = StageOffer
     form_class = StageOfferForm
     template_name = 'stages/company_offer_create.html'
-    success_url = reverse_lazy('company_success') # We'll need to define this URL
+    success_url = reverse_lazy('company_success')
+
+    def test_func(self):
+        # Allow access if user is NOT logged in, OR if logged in but NOT a student
+        if not self.request.user.is_authenticated:
+            return True
+        return not is_etudiant(self.request.user)
+
+    def handle_no_permission(self):
+        # If they are logged in and fail the test (i.e. are a Student), redirect them
+        if self.request.user.is_authenticated:
+            return redirect('home') # or some other page
+        return super().handle_no_permission()
 
     def form_valid(self, form):
         form.instance.state = 'En attente validation'

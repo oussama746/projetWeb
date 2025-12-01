@@ -15,8 +15,8 @@
             <a class="navbar-brand" href="{% url 'home' %}">Gestion Stages</a>
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav me-auto">
-                    {# Show 'Déposer Offre' only if NOT authenticated OR if authenticated but NOT a student #}
-                    {% if not user.is_authenticated or user.groups.all.0.name != 'Etudiant' %}
+                    {# Show 'Déposer Offre' only for anonymous users (Companies) #}
+                    {% if not user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'company_offer_create' %}">Déposer Offre</a>
                     </li>
