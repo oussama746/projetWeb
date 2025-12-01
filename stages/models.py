@@ -16,6 +16,7 @@ class StageOffer(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     state = models.CharField(max_length=30, choices=STATE_CHOICES, default='En attente validation')
+    closing_reason = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.title

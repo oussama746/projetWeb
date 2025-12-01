@@ -44,6 +44,36 @@
     </div>
 </div>
 
+<div class="card mt-4">
+    <div class="card-header">Activité des Étudiants (Candidatures)</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Étudiant</th>
+                        <th>Email</th>
+                        <th>Nombre de candidatures</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in candidatures_per_student %}
+                    <tr>
+                        <td>{{ stat.student__username }}</td>
+                        <td>{{ stat.student__email }}</td>
+                        <td>{{ stat.total }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">Aucune candidature enregistrée.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <script>
     const ctx = document.getElementById('candidaturesChart').getContext('2d');
     const chartData = {

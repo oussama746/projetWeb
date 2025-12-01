@@ -33,6 +33,9 @@
                         {% else %}bg-warning{% endif %}">
                         {{ offer.state }}
                     </span>
+                    {% if offer.state == 'Clôturée' and offer.closing_reason %}
+                        <br><small class="text-muted" style="font-size: 0.8em;">{{ offer.closing_reason }}</small>
+                    {% endif %}
                 </td>
                 <td>
                     <div class="btn-group" role="group">

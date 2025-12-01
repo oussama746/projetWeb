@@ -146,6 +146,7 @@ def apply_for_offer(request, pk):
         new_count = Candidature.objects.filter(offer=offer).count()
         if new_count >= 5:
             offer.state = 'Clôturée'
+            offer.closing_reason = "Automatique : Limite de 5 candidatures atteinte"
             offer.save()
     
     return redirect('student_offer_detail', pk=pk)
@@ -181,6 +182,13 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         context['chart_labels'] = json.dumps(labels, cls=DjangoJSONEncoder)
         context['chart_data'] = json.dumps(data, cls=DjangoJSONEncoder)
         
+        # Bonus: Stats per student
+        context['candidatures_per_student'] = (
+            Candidature.objects.values('student__username', 'student__email')
+            .annotate(total=Count('id'))
+            .order_by('-total')
+        )
+        
         return context
 
 class AdminOfferListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -204,6 +212,10 @@ def admin_change_state(request, pk, new_state):
     offer = get_object_or_404(StageOffer, pk=pk)
     if new_state in dict(StageOffer.STATE_CHOICES):
         offer.state = new_state
+        if new_state == 'Clôturée':
+            offer.closing_reason = f"Manuelle : Clôturée par {request.user.username} (Admin)"
+        else:
+            offer.closing_reason = None # Clear reason if reopened
         offer.save()
     return redirect('admin_offer_list')
 
