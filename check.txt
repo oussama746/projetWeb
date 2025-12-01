@@ -1,0 +1,122 @@
+Liste Détaillée des Tâches d'Implémentation et Exigences Clés
+I. ⚙️ Exigences Techniques et Frameworks (Noté sur la conformité)
+Utiliser Django comme framework web principal.
+
+Utiliser Bootstrap pour assurer l'ergonomie et la conformité aux standards du web.
+
+Utiliser Chart.js pour la création du tableau de bord visuel des statistiques (pour l'Administrateur).
+
+Assurer une bonne ergonomie de l'application en général.
+
+II. 💾 Base de Données et Modélisation (Noté sur la cohérence)
+Créer le modèle StageOffer incluant :
+
+Organisme.
+
+Nom et prénom du contact (client) et son email.
+
+Date et heure du dépôt de l'offre.
+
+Titre du stage.
+
+Détail du stage.
+
+Champ État avec les choix : En attente validation, Validée, Refusée, Clôturée.
+
+
+Créer le modèle Candidature incluant :
+
+Liaison à l'Étudiant (utilisateur authentifié).
+
+Liaison à l'Offre de stage.
+
+Enregistrement de la date et l'heure de candidature.
+
+Mettre en place une contrainte d'unicité pour empêcher une double candidature par le même étudiant pour une même offre.
+
+Mettre en place les 4 types d'utilisateurs (Entreprise, Responsable, Étudiant, Administrateur) via les rôles ou les permissions Django.
+
+III. 🔒 Fonctionnalités par Profil (Noté sur la complétude fonctionnelle)
+A. Entreprise (Non Authentifiée)
+Créer une vue publique (sans login) pour le dépôt d'une demande de stage.
+
+Assurer que l'état initial de toute offre déposée est "en attente validation".
+
+B. Responsable des Stages (Authentifié)
+Mettre en place un système d'identification et mot de passe.
+
+Créer une vue pour obtenir la liste des offres en attente de validation.
+
+Créer une vue ou un formulaire pour valider ou refuser une offre (changer l'état).
+
+Implémenter une fonction de recherche sur toutes les offres.
+
+Permettre la consultation du détail d'une offre.
+
+C. Étudiant (Authentifié)
+Mettre en place un système d'identification et mot de passe.
+
+Créer une vue pour obtenir la liste des offres en cours (celles qui sont Validées et non Clôturées).
+
+
+Implémenter une fonction de recherche sur les offres en cours.
+
+Permettre la consultation du détail d'une offre.
+
+Implémenter la fonction de candidature à une offre (enregistrement de la Candidature).
+
+
+Logique critique : Limiter la candidature aux 5 premiers étudiants seulement.
+
+
+Déclencheur d'état critique : Dès que la 5ème candidature est enregistrée, changer automatiquement l'état de l'offre à "Clôturée".
+
+D. Administrateur (Authentifié)
+Mettre en place un système d'identification et mot de passe.
+
+Permettre le changement d'état d'une offre (y compris si elle est clôturée).
+
+Permettre la liste, la recherche et la consultation du détail des offres (similaire au Responsable).
+
+Créer un tableau de bord visuel utilisant Chart.js pour les statistiques  . Les statistiques doivent inclure :
+
+Nombre d'offres reçues.
+
+Nombre d'offres en cours.
+
+Nombre de candidatures soumises pour un étudiant (permet de suivre l'activité individuelle).
+
+Nombre de candidatures reçues par mois sur les 12 derniers mois.
+
+✅ Checklist de Remise Finale (Noté sur les modalités)
+
+Code GitLab : Projet gitlab spécifique créé.
+
+
+Accès Professeur : Enseignant ajouté en tant que mainteneur du projet.
+
+
+Mise à jour : Dernière mise à jour du code effectuée à la fin de la dernière séance de TP.
+
+
+Base de Démonstration : Une base de données de démonstration cohérente et professionnelle est fournie.
+
+
+
+Email de Remise : Un email a été envoyé à l'enseignant incluant:
+
+Un compte login/mot de passe pour le profil Responsable des stages.
+
+Un compte login/mot de passe pour le profil Étudiant.
+
+Un compte login/mot de passe pour le profil Administrateur.
+
+Les URLs à utiliser pour accéder aux différentes parties de l'application.
+
+Critères de Notation : Vérifier l'attention portée à :
+
+Maintenabilité du code (structuration, nommage, commentaires...).
+
+Robustesse et sécurité du code (gestion des erreurs et de la sécurité).
+
+Fonctionnalités supplémentaires proposées (bonus)
