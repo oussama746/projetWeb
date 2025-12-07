@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Mon Profil Étudiant</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Numéro de téléphone</label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <div class="text-danger">{{ form.phone.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Ma présentation (Bio)</label>
+                        {{ form.bio }}
+                        <small class="form-text text-muted">{{ form.bio.help_text }}</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">CV (PDF)</label>
+                        {{ form.cv }}
+                        {% if form.instance.cv %}
+                            <div class="mt-2">
+                                Actuel : <a href="{{ form.instance.cv.url }}" target="_blank">Voir mon CV</a>
+                            </div>
+                        {% endif %}
+                        <small class="form-text text-muted">{{ form.cv.help_text }}</small>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Enregistrer mon profil</button>
+                        <a href="{% url 'student_offer_list' %}" class="btn btn-secondary">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

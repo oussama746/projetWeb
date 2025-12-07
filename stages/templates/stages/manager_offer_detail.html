@@ -10,11 +10,11 @@
         <p><strong>Contact:</strong> {{ object.contact_name }} ({{ object.contact_email }})</p>
         <p><strong>État actuel:</strong> {{ object.state }}</p>
         
-        <div class="mt-3">
-            <a href="{% url 'manager_offer_action' object.pk 'validate' %}" class="btn btn-success">Valider</a>
-            <a href="{% url 'manager_offer_action' object.pk 'refuse' %}" class="btn btn-danger">Refuser</a>
-            <a href="{% url 'manager_offer_list' %}" class="btn btn-secondary">Retour</a>
-        </div>
+    <div class="mt-3">
+        <a href="{% url 'manager_offer_action' object.pk 'validate' %}" class="btn btn-success">Valider</a>
+        <a href="{% url 'manager_offer_action' object.pk 'refuse' %}" class="btn btn-danger">Refuser</a>
+        <a href="{% url 'manager_offer_candidates' object.pk %}" class="btn btn-info text-white">Voir Candidats</a>
+        <a href="{% url 'manager_offer_list' %}" class="btn btn-secondary">Retour</a>
     </div>
 </div>
 {% endblock %}

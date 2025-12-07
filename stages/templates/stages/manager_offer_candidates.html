@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Candidats pour : {{ offer.title }}</h2>
+<h5 class="text-muted">{{ offer.organisme }}</h5>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <strong>État de l'offre :</strong> {{ offer.state }} <br>
+        <strong>Nombre de candidats :</strong> {{ candidates|length }} / 5
+    </div>
+    <div>
+        <a href="{% url 'export_candidates_csv' offer.pk %}" class="btn btn-outline-success">
+            <i class="fas fa-file-excel"></i> Exporter CSV
+        </a>
+    </div>
+</div>
+
+{% if candidates %}
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Nom d'utilisateur</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>CV</th>
+                    <th>Date</th>
+                    <th>Bio</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for candidate in candidates %}
+                <tr>
+                    <td>{{ candidate.student.username }}</td>
+                    <td><a href="mailto:{{ candidate.student.email }}">{{ candidate.student.email }}</a></td>
+                    <td>
+                        {% if candidate.student.studentprofile.phone %}
+                            {{ candidate.student.studentprofile.phone }}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if candidate.student.studentprofile.cv %}
+                            <a href="{{ candidate.student.studentprofile.cv.url }}" target="_blank" class="btn btn-sm btn-info text-white">
+                                <i class="fas fa-download"></i> Voir CV
+                            </a>
+                        {% else %}
+                            <span class="badge bg-secondary">Pas de CV</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ candidate.date_candidature|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if candidate.student.studentprofile.bio %}
+                            <button type="button" class="btn btn-sm btn-link" data-bs-toggle="popover" title="Bio" data-bs-content="{{ candidate.student.studentprofile.bio }}">
+                                Lire Bio
+                            </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-warning">
+        Aucun candidat pour le moment.
+    </div>
+{% endif %}
+
+<div class="mt-3">
+    <a href="{% url 'manager_offer_detail' offer.pk %}" class="btn btn-secondary">Retour au détail</a>
+    <a href="{% url 'manager_offer_list' %}" class="btn btn-primary">Retour à la liste</a>
+</div>
+
+<script>
+    // Enable popovers
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+      return new bootstrap.Popover(popoverTriggerEl)
+    })
+</script>
+{% endblock %}

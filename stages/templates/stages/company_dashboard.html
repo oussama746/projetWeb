@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Espace Entreprise - Mes Offres</h2>
+
+<div class="mb-3">
+    <a href="{% url 'company_offer_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus-circle"></i> Déposer une nouvelle offre
+    </a>
+</div>
+
+{% if offers %}
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Titre</th>
+                    <th>Date de dépôt</th>
+                    <th>État</th>
+                    <th>Candidats</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for offer in offers %}
+                <tr>
+                    <td>{{ offer.title }}</td>
+                    <td>{{ offer.date_depot|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if offer.state == 'Validée' %}
+                            <span class="badge bg-success">En ligne</span>
+                        {% elif offer.state == 'En attente validation' %}
+                            <span class="badge bg-warning text-dark">En attente</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ offer.state }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-info text-white">{{ offer.candidature_set.count }}</span>
+                    </td>
+                    <td>
+                        <a href="{% url 'company_offer_candidates' offer.pk %}" class="btn btn-sm btn-primary">
+                            Gérer les candidats
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        Vous n'avez pas encore déposé d'offre.
+    </div>
+{% endif %}
+{% endblock %}

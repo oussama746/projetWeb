@@ -7,13 +7,19 @@ from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from datetime import timedelta
 from django.urls import reverse_lazy
-from .models import StageOffer, Candidature
-from .forms import StageOfferForm
+from .models import StageOffer, Candidature, StudentProfile
+from .forms import StageOfferForm, StudentProfileForm
 import json
+import csv
+from django.http import HttpResponse
 from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User, Group
 from django.contrib import messages
+
+# Helper function for home page
+def home(request):
+    return render(request, 'home.html')
 
 # Helper functions for permissions
 def is_responsable(user):
@@ -25,12 +31,19 @@ def is_etudiant(user):
 def is_admin(user):
     return user.groups.filter(name='Administrateur').exists() or user.is_superuser
 
+def is_company(user):
+    # On considère qu'un user est une entreprise s'il est dans le groupe 'Entreprise' 
+    # ou simplement s'il n'est ni étudiant ni responsable ni admin (pour simplifier si pas de groupe)
+    # Ici, soyons stricts : on va créer le groupe Entreprise plus tard.
+    return user.groups.filter(name='Entreprise').exists() or user.is_superuser
+
 def register(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Add to Etudiant group by default
+            # Par défaut étudiant, MAIS si on voulait faire propre, on aurait un choix à l'inscription.
+            # Pour l'instant on garde étudiant par défaut ici.
             group, created = Group.objects.get_or_create(name='Etudiant')
             user.groups.add(group)
             messages.success(request, 'Compte créé avec succès ! Vous pouvez maintenant vous connecter.')
@@ -40,27 +53,72 @@ def register(request):
     return render(request, 'registration/register.html', {'form': form})
 
 # 2.1 Vue pour l'Entreprise (Dépôt)
-class CompanyOfferCreateView(UserPassesTestMixin, CreateView):
+class CompanyOfferCreateView(LoginRequiredMixin, CreateView):
     model = StageOffer
     form_class = StageOfferForm
     template_name = 'stages/company_offer_create.html'
     success_url = reverse_lazy('company_success')
 
-    def test_func(self):
-        # Allow access if user is NOT logged in, OR if logged in but NOT a student
-        if not self.request.user.is_authenticated:
-            return True
-        return not is_etudiant(self.request.user)
-
-    def handle_no_permission(self):
-        # If they are logged in and fail the test (i.e. are a Student), redirect them
-        if self.request.user.is_authenticated:
-            return redirect('home') # or some other page
-        return super().handle_no_permission()
-
     def form_valid(self, form):
         form.instance.state = 'En attente validation'
+        # Lier l'offre à l'utilisateur connecté (Entreprise)
+        form.instance.company = self.request.user
+        form.instance.organisme = self.request.user.username # Optionnel: utiliser le nom d'utilisateur comme nom d'entreprise
         return super().form_valid(form)
+
+# Vue Tableau de bord Entreprise
+class CompanyDashboardView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = StageOffer
+    template_name = 'stages/company_dashboard.html'
+    context_object_name = 'offers'
+
+    def test_func(self):
+        return is_company(self.request.user)
+
+    def get_queryset(self):
+        # Ne montrer que les offres de CETTE entreprise
+        return StageOffer.objects.filter(company=self.request.user).order_by('-date_depot')
+
+# Vue pour voir les candidats d'une offre (Entreprise)
+class CompanyOfferCandidatesView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Candidature
+    template_name = 'stages/company_offer_candidates.html'
+    context_object_name = 'candidates'
+
+    def test_func(self):
+        # L'utilisateur doit être une entreprise ET être le propriétaire de l'offre
+        offer = get_object_or_404(StageOffer, pk=self.kwargs['pk'])
+        return is_company(self.request.user) and offer.company == self.request.user
+
+    def get_queryset(self):
+        self.offer = get_object_or_404(StageOffer, pk=self.kwargs['pk'])
+        return Candidature.objects.filter(offer=self.offer).order_by('date_candidature')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['offer'] = self.offer
+        return context
+
+# Action pour accepter/refuser un candidat
+@login_required
+@user_passes_test(is_company)
+def company_candidate_action(request, pk, action):
+    candidature = get_object_or_404(Candidature, pk=pk)
+    
+    # Sécurité : Vérifier que l'offre appartient bien à l'entreprise connectée
+    if candidature.offer.company != request.user:
+        messages.error(request, "Accès non autorisé.")
+        return redirect('home')
+
+    if action == 'accept':
+        candidature.status = 'Acceptée'
+        messages.success(request, f"Candidature de {candidature.student.username} acceptée !")
+    elif action == 'reject':
+        candidature.status = 'Refusée'
+        messages.warning(request, f"Candidature de {candidature.student.username} refusée.")
+    
+    candidature.save()
+    return redirect('company_offer_candidates', pk=candidature.offer.pk)
 
 def company_success(request):
     return render(request, 'stages/company_success.html')
@@ -264,3 +322,108 @@ def admin_user_update_role(request, pk):
                 messages.error(request, "Groupe invalide.")
                 
     return redirect('admin_user_list')
+
+# --- Nouvelles fonctionnalités ---
+
+# Vue pour que l'étudiant voie ses candidatures
+class StudentCandidatureListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Candidature
+    template_name = 'stages/student_candidature_list.html'
+    context_object_name = 'candidatures'
+
+    def test_func(self):
+        return is_etudiant(self.request.user)
+
+    def get_queryset(self):
+        return Candidature.objects.filter(student=self.request.user).order_by('-date_candidature')
+
+# Vue pour retirer une candidature
+@login_required
+@user_passes_test(is_etudiant)
+def withdraw_candidature(request, pk):
+    candidature = get_object_or_404(Candidature, pk=pk, student=request.user)
+    offer = candidature.offer
+    
+    # Supprimer la candidature
+    candidature.delete()
+    messages.success(request, "Candidature retirée avec succès.")
+
+    # Logique intelligente : Réouvrir l'offre si elle était clôturée pour cause de limite atteinte
+    # et qu'on repasse sous la barre des 5.
+    if offer.state == 'Clôturée' and offer.closing_reason and "Limite de 5 candidatures atteinte" in offer.closing_reason:
+        current_count = offer.candidature_set.count()
+        if current_count < 5:
+            offer.state = 'Validée'
+            offer.closing_reason = None
+            offer.save()
+
+    return redirect('student_candidature_list')
+
+# Vue pour le responsable pour voir les candidats d'une offre
+class ManagerOfferCandidatesView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Candidature
+    template_name = 'stages/manager_offer_candidates.html'
+    context_object_name = 'candidates'
+
+    def test_func(self):
+        return is_responsable(self.request.user)
+
+    def get_queryset(self):
+        self.offer = get_object_or_404(StageOffer, pk=self.kwargs['pk'])
+        return Candidature.objects.filter(offer=self.offer).order_by('date_candidature')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['offer'] = self.offer
+        return context
+
+# Vue pour éditer le profil étudiant
+@login_required
+@user_passes_test(is_etudiant)
+def profile_edit(request):
+    profile, created = StudentProfile.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        form = StudentProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Votre profil a été mis à jour.")
+            return redirect('student_offer_list')
+    else:
+        form = StudentProfileForm(instance=profile)
+    
+    return render(request, 'stages/profile_edit.html', {'form': form})
+
+# Vue pour exporter les candidats en CSV
+@login_required
+@user_passes_test(is_responsable)
+def export_candidates_csv(request, pk):
+    offer = get_object_or_404(StageOffer, pk=pk)
+    candidates = Candidature.objects.filter(offer=offer)
+
+    response = HttpResponse(
+        content_type='text/csv',
+        headers={'Content-Disposition': f'attachment; filename="candidats_{offer.id}.csv"'},
+    )
+
+    writer = csv.writer(response)
+    writer.writerow(['Nom utilisateur', 'Email', 'Téléphone', 'Date Candidature', 'Lien CV'])
+
+    for cand in candidates:
+        # Récupérer le profil s'il existe
+        try:
+            profile = cand.student.studentprofile
+            phone = profile.phone
+            cv_url = request.build_absolute_uri(profile.cv.url) if profile.cv else "Aucun CV"
+        except StudentProfile.DoesNotExist:
+            phone = "N/A"
+            cv_url = "Pas de profil"
+
+        writer.writerow([
+            cand.student.username,
+            cand.student.email,
+            phone,
+            cand.date_candidature.strftime("%Y-%m-%d %H:%M"),
+            cv_url
+        ])
+
+    return response

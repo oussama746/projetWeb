@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Gestion des Candidatures</h2>
+<h4 class="text-muted">Offre : {{ offer.title }}</h4>
+
+<div class="mb-3">
+    <a href="{% url 'company_dashboard' %}" class="btn btn-secondary">Retour au tableau de bord</a>
+    <a href="{% url 'export_candidates_csv' offer.pk %}" class="btn btn-outline-success ms-2">
+        <i class="fas fa-file-excel"></i> Exporter la liste
+    </a>
+</div>
+
+{% if candidates %}
+    <div class="row">
+        {% for candidature in candidates %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 {% if candidature.status == 'Acceptée' %}border-success{% elif candidature.status == 'Refusée' %}border-danger{% endif %}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ candidature.student.username }}</h5>
+                    <span class="badge {% if candidature.status == 'Acceptée' %}bg-success{% elif candidature.status == 'Refusée' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                        {{ candidature.status }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <strong>Email:</strong> <a href="mailto:{{ candidature.student.email }}">{{ candidature.student.email }}</a><br>
+                        <strong>Date:</strong> {{ candidature.date_candidature|date:"d/m/Y H:i" }}
+                    </p>
+                    
+                    {# Informations du profil si disponible #}
+                    {% if candidature.student.studentprofile %}
+                        <p>
+                            <strong>Téléphone:</strong> {{ candidature.student.studentprofile.phone|default:"Non renseigné" }}
+                        </p>
+                        {% if candidature.student.studentprofile.bio %}
+                            <div class="alert alert-light border">
+                                <small><strong>Bio:</strong> {{ candidature.student.studentprofile.bio }}</small>
+                            </div>
+                        {% endif %}
+                        {% if candidature.student.studentprofile.cv %}
+                            <a href="{{ candidature.student.studentprofile.cv.url }}" target="_blank" class="btn btn-sm btn-info text-white mb-3">
+                                <i class="fas fa-download"></i> Voir le CV
+                            </a>
+                        {% else %}
+                            <p class="text-muted"><small>Pas de CV disponible.</small></p>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted"><small>Profil non complété.</small></p>
+                    {% endif %}
+
+                    <hr>
+                    <div class="d-flex justify-content-around">
+                        {% if candidature.status == 'En attente' %}
+                            <a href="{% url 'company_candidate_action' candidature.pk 'accept' %}" class="btn btn-success flex-grow-1 me-2">
+                                <i class="fas fa-check"></i> Accepter
+                            </a>
+                            <a href="{% url 'company_candidate_action' candidature.pk 'reject' %}" class="btn btn-danger flex-grow-1">
+                                <i class="fas fa-times"></i> Refuser
+                            </a>
+                        {% else %}
+                            <span class="text-muted">Décision prise.</span>
+                            {# Optionnel : permettre de changer d'avis #}
+                            {% if candidature.status == 'Acceptée' %}
+                                <a href="{% url 'company_candidate_action' candidature.pk 'reject' %}" class="btn btn-sm btn-outline-danger ms-2">Annuler</a>
+                            {% else %}
+                                <a href="{% url 'company_candidate_action' candidature.pk 'accept' %}" class="btn btn-sm btn-outline-success ms-2">Reconsidérer</a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-warning">
+        Aucun candidat n'a encore postulé à cette offre.
+    </div>
+{% endif %}
+{% endblock %}
