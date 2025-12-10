@@ -8,12 +8,11 @@ from django.utils import timezone
 from datetime import timedelta
 from django.urls import reverse_lazy
 from .models import StageOffer, Candidature, StudentProfile
-from .forms import StageOfferForm, StudentProfileForm
+from .forms import StageOfferForm, StageOfferFormAuthenticated, StudentProfileForm, CustomUserCreationForm
 import json
 import csv
 from django.http import HttpResponse
 from django.core.serializers.json import DjangoJSONEncoder
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User, Group
 from django.contrib import messages
 
@@ -39,23 +38,30 @@ def is_company(user):
 
 def register(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Par défaut étudiant, MAIS si on voulait faire propre, on aurait un choix à l'inscription.
-            # Pour l'instant on garde étudiant par défaut ici.
-            group, created = Group.objects.get_or_create(name='Etudiant')
-            user.groups.add(group)
-            messages.success(request, 'Compte créé avec succès ! Vous pouvez maintenant vous connecter.')
+            role = form.cleaned_data.get('role')
+            
+            if role == 'entreprise':
+                group, created = Group.objects.get_or_create(name='Entreprise')
+                user.groups.add(group)
+                messages.success(request, 'Compte Entreprise créé avec succès !')
+            else:
+                # Par défaut Etudiant
+                group, created = Group.objects.get_or_create(name='Etudiant')
+                user.groups.add(group)
+                messages.success(request, 'Compte Étudiant créé avec succès !')
+            
             return redirect('login')
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
     return render(request, 'registration/register.html', {'form': form})
 
 # 2.1 Vue pour l'Entreprise (Dépôt)
 class CompanyOfferCreateView(LoginRequiredMixin, CreateView):
     model = StageOffer
-    form_class = StageOfferForm
+    form_class = StageOfferFormAuthenticated
     template_name = 'stages/company_offer_create.html'
     success_url = reverse_lazy('company_success')
 
@@ -225,7 +231,7 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         
         # Aggregation: Candidatures per month for last 12 months
         one_year_ago = timezone.now() - timedelta(days=365)
-        stats = (
+        qs_stats = (
             Candidature.objects.filter(date_candidature__gte=one_year_ago)
             .annotate(month=TruncMonth('date_candidature'))
             .values('month')
@@ -233,9 +239,43 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             .order_by('month')
         )
         
-        # Format for Chart.js
-        labels = [s['month'].strftime('%Y-%m') for s in stats]
-        data = [s['count'] for s in stats]
+        # Transform qs_stats into a dict for easy lookup
+        stats_dict = {}
+        for s in qs_stats:
+            if s['month']:
+                stats_dict[s['month'].strftime('%Y-%m')] = s['count']
+
+        # Generate last 12 months keys
+        labels = []
+        data = []
+        today = timezone.now()
+        
+        months_fr = {
+            1: 'Janvier', 2: 'Février', 3: 'Mars', 4: 'Avril',
+            5: 'Mai', 6: 'Juin', 7: 'Juillet', 8: 'Août',
+            9: 'Septembre', 10: 'Octobre', 11: 'Novembre', 12: 'Décembre'
+        }
+        
+        for i in range(12):
+            # Calculate year and month going back i months
+            y = today.year
+            m = today.month - i
+            while m <= 0:
+                m += 12
+                y -= 1
+            
+            # Key for lookup
+            lookup_key = f"{y}-{m:02d}"
+            
+            # Label for display
+            display_label = f"{months_fr[m]} {y}"
+            
+            labels.append(display_label)
+            data.append(stats_dict.get(lookup_key, 0))
+        
+        # Reverse to show chronological order (oldest -> newest)
+        labels.reverse()
+        data.reverse()
         
         context['chart_labels'] = json.dumps(labels, cls=DjangoJSONEncoder)
         context['chart_data'] = json.dumps(data, cls=DjangoJSONEncoder)
@@ -395,9 +435,17 @@ def profile_edit(request):
 
 # Vue pour exporter les candidats en CSV
 @login_required
-@user_passes_test(is_responsable)
 def export_candidates_csv(request, pk):
     offer = get_object_or_404(StageOffer, pk=pk)
+    
+    # Vérification des permissions
+    is_res = is_responsable(request.user)
+    is_comp = is_company(request.user) and offer.company == request.user
+    
+    if not (is_res or is_comp):
+        messages.error(request, "Vous n'avez pas la permission d'exporter cette liste.")
+        return redirect('home')
+
     candidates = Candidature.objects.filter(offer=offer)
 
     response = HttpResponse(

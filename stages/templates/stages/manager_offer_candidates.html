@@ -31,8 +31,20 @@
             </thead>
             <tbody>
                 {% for candidate in candidates %}
+                {% if request.user.is_superuser %}
+                <tr class="{% if forloop.counter <= 5 %}table-success{% else %}table-secondary text-muted{% endif %}">
+                    <td>
+                        {{ candidate.student.username }}
+                        {% if forloop.counter <= 5 %}
+                            <span class="badge bg-success ms-2">Dans le quota</span>
+                        {% else %}
+                            <span class="badge bg-secondary ms-2">Hors quota</span>
+                        {% endif %}
+                    </td>
+                {% else %}
                 <tr>
                     <td>{{ candidate.student.username }}</td>
+                {% endif %}
                     <td><a href="mailto:{{ candidate.student.email }}">{{ candidate.student.email }}</a></td>
                     <td>
                         {% if candidate.student.studentprofile.phone %}

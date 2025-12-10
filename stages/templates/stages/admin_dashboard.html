@@ -3,99 +3,134 @@
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Tableau de Bord Administrateur</h2>
+        <h2>Tableau de Bord Admin</h2>
         <div>
-            <a href="{% url 'admin_user_list' %}" class="btn btn-warning me-2">Gérer les Utilisateurs</a>
-            <a href="{% url 'admin_offer_list' %}" class="btn btn-primary">Gérer les Offres</a>
+            <a href="{% url 'admin_offer_list' %}" class="btn btn-primary"><i class="fas fa-list-alt"></i> Offres</a>
         </div>
     </div>
 
+    <!-- KPI Cards -->
     <div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-primary mb-3">
-            <div class="card-header">Total Offres</div>
-            <div class="card-body">
-                <h5 class="card-title">{{ total_offers }}</h5>
+        <div class="col-md-4">
+            <div class="card mb-3 border-0" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                <div class="card-body text-white">
+                    <h6 class="text-uppercase mb-2" style="opacity: 0.8;">Total Offres</h6>
+                    <h2 class="mb-0">{{ total_offers }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-3 border-0" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <div class="card-body text-white">
+                    <h6 class="text-uppercase mb-2" style="opacity: 0.8;">En Attente</h6>
+                    <h2 class="mb-0">{{ pending_offers }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-3 border-0" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <div class="card-body text-white">
+                    <h6 class="text-uppercase mb-2" style="opacity: 0.8;">Validées</h6>
+                    <h2 class="mb-0">{{ validated_offers }}</h2>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-warning mb-3">
-            <div class="card-header">En Attente</div>
-            <div class="card-body">
-                <h5 class="card-title">{{ pending_offers }}</h5>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-success mb-3">
-            <div class="card-header">Validées</div>
-            <div class="card-body">
-                <h5 class="card-title">{{ validated_offers }}</h5>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="card">
-    <div class="card-header">Candidatures sur les 12 derniers mois</div>
-    <div class="card-body">
-        <canvas id="candidaturesChart"></canvas>
-    </div>
-</div>
+    <div class="row">
+        <!-- Chart Section -->
+        <div class="col-lg-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Candidatures (12 derniers mois)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="candidaturesChart"></canvas>
+                </div>
+            </div>
+        </div>
 
-<div class="card mt-4">
-    <div class="card-header">Activité des Étudiants (Candidatures)</div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Étudiant</th>
-                        <th>Email</th>
-                        <th>Nombre de candidatures</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for stat in candidatures_per_student %}
-                    <tr>
-                        <td>{{ stat.student__username }}</td>
-                        <td>{{ stat.student__email }}</td>
-                        <td>{{ stat.total }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3" class="text-center">Aucune candidature enregistrée.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- Student Activity Table -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Tous les Candidats</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="border-0 ps-4">Étudiant</th>
+                                    <th class="border-0 text-end pe-4">Candidatures</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in candidatures_per_student %} {# Show all candidates #}
+                                <tr>
+                                    <td class="ps-4 border-bottom border-secondary">
+                                        <div class="fw-bold">{{ stat.student__username }}</div>
+                                        <small class="text-muted">{{ stat.student__email }}</small>
+                                    </td>
+                                    <td class="text-end pe-4 border-bottom border-secondary align-middle">
+                                        <span class="badge bg-primary rounded-pill">{{ stat.total }}</span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center p-4 text-muted">Aucune donnée.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+
     const ctx = document.getElementById('candidaturesChart').getContext('2d');
     const chartData = {
         labels: {{ chart_labels|safe }},
         datasets: [{
-            label: 'Nombre de candidatures',
+            label: 'Candidatures',
             data: {{ chart_data|safe }},
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
+            backgroundColor: 'rgba(99, 102, 241, 0.5)', /* Primary color transparent */
+            borderColor: '#6366f1',
+            borderWidth: 2,
+            borderRadius: 4,
+            tension: 0.4 /* Smooth curves */
         }]
     };
 
     const myChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'line', /* Switch to line for cleaner look, or 'bar' */
         data: chartData,
         options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
             scales: {
                 y: {
                     beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
                     ticks: {
                         stepSize: 1
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
                     }
                 }
             }
