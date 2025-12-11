@@ -8,6 +8,25 @@ class StageOffer(models.Model):
         ('Refusée', 'Refusée'),
         ('Clôturée', 'Clôturée'),
     ]
+    
+    DURATION_CHOICES = [
+        ('1-3 mois', '1-3 mois'),
+        ('3-6 mois', '3-6 mois'),
+        ('6+ mois', '6+ mois'),
+    ]
+    
+    DOMAIN_CHOICES = [
+        ('Développement Web', 'Développement Web'),
+        ('Développement Mobile', 'Développement Mobile'),
+        ('Data Science', 'Data Science'),
+        ('Cybersécurité', 'Cybersécurité'),
+        ('DevOps', 'DevOps'),
+        ('IA/Machine Learning', 'IA/Machine Learning'),
+        ('Réseau', 'Réseau'),
+        ('Base de données', 'Base de données'),
+        ('Cloud Computing', 'Cloud Computing'),
+        ('Autre', 'Autre'),
+    ]
 
     organisme = models.CharField(max_length=100)
     contact_name = models.CharField(max_length=100)
@@ -18,6 +37,12 @@ class StageOffer(models.Model):
     state = models.CharField(max_length=30, choices=STATE_CHOICES, default='En attente validation')
     closing_reason = models.CharField(max_length=255, blank=True, null=True)
     company = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='company_offers')
+    
+    # Nouveaux champs pour filtres avancés
+    city = models.CharField(max_length=100, blank=True, null=True)
+    duration = models.CharField(max_length=20, choices=DURATION_CHOICES, blank=True, null=True)
+    domain = models.CharField(max_length=50, choices=DOMAIN_CHOICES, blank=True, null=True)
+    remote = models.BooleanField(default=False, help_text="Stage en télétravail possible")
 
     def __str__(self):
         return self.title

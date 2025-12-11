@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test CORS</title>
+</head>
+<body>
+    <h1>Test CORS depuis localhost:8080</h1>
+    <button onclick="testAPI()">Test /api/offers/</button>
+    <button onclick="testMe()">Test /api/auth/me/</button>
+    <pre id="result" style="background:#f0f0f0;padding:10px;margin-top:10px;"></pre>
+    
+    <script>
+        async function testAPI() {
+            await test('http://localhost:8000/api/offers/');
+        }
+        
+        async function testMe() {
+            await test('http://localhost:8000/api/auth/me/');
+        }
+        
+        async function test(url) {
+            const result = document.getElementById('result');
+            result.textContent = `Testing ${url}...\n\n`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                result.textContent += `✅ Status: ${response.status} ${response.statusText}\n\n`;
+                result.textContent += `Headers:\n`;
+                for (const [key, value] of response.headers) {
+                    result.textContent += `  ${key}: ${value}\n`;
+                }
+                
+                const text = await response.text();
+                result.textContent += `\n📄 Body:\n${text.substring(0, 500)}`;
+                
+            } catch (error) {
+                result.textContent += `❌ Erreur: ${error.message}\n`;
+                result.textContent += `\nVérifie la console du navigateur (F12)`;
+                console.error('Erreur complète:', error);
+            }
+        }
+    </script>
+</body>
+</html>

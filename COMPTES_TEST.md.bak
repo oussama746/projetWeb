@@ -1,0 +1,206 @@
+# 🔑 Comptes de Test
+
+## 📊 Types d'utilisateurs
+
+### 1. 👨‍🎓 Étudiant
+**Rôle** : Consulter les offres et candidater
+
+**Comptes disponibles** :
+```
+Username: etudiant1
+Password: etud123
+Email: etudiant1@example.com
+```
+
+**Accès** :
+- `/login` → Se connecter
+- `/offres` → Voir les offres validées
+- `/etudiant` → Mes candidatures
+- `/etudiant/profil` → Mon profil (CV, bio, téléphone)
+
+---
+
+### 2. 🏢 Entreprise (Responsable d'entreprise)
+**Rôle** : Gérer les offres de son entreprise et les candidatures
+
+**Inscription** :
+1. S'inscrire sur `/register`
+2. Sélectionner rôle : **Entreprise**
+3. **IMPORTANT** : Utiliser l'email professionnel de l'entreprise (ex: `emilien.dubois@accenture.org`)
+
+**Comptes existants** :
+```
+Username: techcorp
+Password: entr123
+Email: contact@techcorp.com
+```
+
+```
+Username: datasolutions
+Password: entr123
+Email: info@datasolutions.com
+```
+
+**Comment ça marche** :
+1. L'entreprise dépose une offre **SANS connexion** sur `/entreprises`
+2. Elle renseigne son email de contact (ex: `emilien.dubois@accenture.org`)
+3. Une personne s'inscrit avec rôle "Entreprise" et **le même email**
+4. Elle voit alors **TOUTES** les offres avec cet email sur `/entreprise`
+5. Elle peut gérer les candidatures (accepter/refuser)
+
+**Accès** :
+- `/login` → Se connecter
+- `/entreprise` → Tableau de bord (voir mes offres + candidatures)
+- Voir les candidats avec leurs CV, bio, téléphone
+- Accepter/Refuser des candidatures
+
+**Dashboard** :
+- Liste de toutes les offres avec l'email du compte
+- Statistiques (total, en attente, actives, clôturées)
+- Gestion des candidatures par offre
+- Profils des candidats (CV téléchargeable)
+
+---
+
+### 3. 👔 Responsable Stages (IUT)
+**Rôle** : Valider/Refuser les offres déposées
+
+**Compte** :
+```
+Username: responsable
+Password: resp123
+Email: responsable@iut-orsay.fr
+```
+
+**Accès** :
+- `/login` → Se connecter
+- `/responsable` → Valider/Refuser les offres en attente
+- Voir toutes les offres (en attente, validées, refusées)
+- Rechercher des offres
+
+---
+
+### 4. 🛡️ Administrateur
+**Rôle** : Gérer tout le site + statistiques
+
+**Compte** :
+```
+Username: admin
+Password: admin123
+Email: admin@stageconnect.fr
+```
+
+**Accès** :
+- `/login` → Se connecter
+- `/admin` → Dashboard admin avec statistiques
+- Django Admin : `http://192.168.1.55:8000/admin/`
+
+---
+
+## 🔄 Workflow Complet
+
+### Scénario : Accenture cherche un stagiaire
+
+1. **Dépôt d'offre (Sans connexion)**
+   - Page `/entreprises`
+   - Organisme: "Accenture"
+   - Contact: "Emilien Dubois"
+   - Email: `emilien.dubois@accenture.org`
+   - Titre: "Stage Développeur Java"
+   - → Offre créée avec état "En attente validation"
+   - → Email de confirmation envoyé à `emilien.dubois@accenture.org`
+
+2. **Validation par le responsable IUT**
+   - Connexion : `responsable` / `resp123`
+   - Page `/responsable`
+   - Clique "Valider" sur l'offre
+   - → État passe à "Validée"
+   - → Email envoyé à `emilien.dubois@accenture.org`
+
+3. **Inscription du responsable d'entreprise**
+   - Emilien va sur `/register`
+   - Username: `emilien.dubois`
+   - Email: `emilien.dubois@accenture.org` ⚠️ **IMPORTANT : Même email**
+   - Password: `accen123`
+   - Rôle: **Entreprise**
+
+4. **Connexion entreprise**
+   - Emilien se connecte : `emilien.dubois` / `accen123`
+   - Va sur `/entreprise`
+   - **Voit son offre "Stage Développeur Java"** (car même email)
+
+5. **Candidature étudiant**
+   - Étudiant se connecte : `etudiant1` / `etud123`
+   - Va sur `/offres`
+   - Voit l'offre "Stage Développeur Java" (état Validée)
+   - Clique "Candidater"
+   - → Email à l'étudiant (confirmation)
+   - → Email à `emilien.dubois@accenture.org` (notification)
+
+6. **Gestion candidature par l'entreprise**
+   - Emilien sur `/entreprise`
+   - Voit "1 candidature" sur son offre
+   - Clique "Voir les candidats"
+   - Voit le profil de l'étudiant :
+     * Username, email
+     * Téléphone (si renseigné)
+     * Bio/Présentation
+     * **CV téléchargeable**
+   - Clique "Accepter" ou "Refuser"
+   - → Email envoyé à l'étudiant
+
+---
+
+## 🎯 Points Clés
+
+### Email = Identifiant unique
+- Le **même email** lie les offres déposées et le compte entreprise
+- Si offre avec `contact@accenture.org`, seul un compte avec cet email la verra
+
+### Pas de connexion pour déposer
+- Les entreprises peuvent déposer **sans créer de compte**
+- Elles créent un compte **ensuite** pour gérer les candidatures
+
+### Validation obligatoire
+- Toute offre déposée doit être **validée par le responsable IUT**
+- Les étudiants voient seulement les offres "Validées"
+
+### Emails automatiques
+- Dépôt offre → Email entreprise
+- Validation → Email entreprise
+- Candidature → Email étudiant + Email entreprise
+- Accepter/Refuser → Email étudiant
+
+---
+
+## 📝 Créer de Nouveaux Comptes
+
+### Étudiant
+1. `/register`
+2. Rôle: Étudiant
+3. Remplir le profil sur `/etudiant/profil`
+
+### Entreprise
+1. `/register`
+2. Rôle: Entreprise
+3. **Email professionnel** (celui utilisé dans les offres)
+4. Accéder à `/entreprise`
+
+### Tester
+1. Déposer offre avec email X sur `/entreprises`
+2. S'inscrire avec le même email X
+3. Se connecter → voir l'offre sur `/entreprise`
+
+---
+
+## 🌐 URLs Principales
+
+- **Accueil** : http://192.168.1.55:8080/
+- **Offres** : http://192.168.1.55:8080/offres
+- **Déposer offre** : http://192.168.1.55:8080/entreprises
+- **Étudiant** : http://192.168.1.55:8080/etudiant
+- **Entreprise** : http://192.168.1.55:8080/entreprise
+- **Responsable** : http://192.168.1.55:8080/responsable
+- **Admin** : http://192.168.1.55:8080/admin
+
+✨ Système complet avec rôles distincts !

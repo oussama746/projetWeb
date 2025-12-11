@@ -1,0 +1,352 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Layout from "@/components/layout/Layout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api, DashboardStats, StageOffer } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { Briefcase, FileCheck, FileClock, FileX, FolderClosed, Users, CheckCircle, XCircle } from "lucide-react";
+
+const AdminDashboard = () => {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [offers, setOffers] = useState<StageOffer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (user.role !== "Administrateur" && user.role !== "Responsable") {
+      toast({
+        title: "Accès refusé",
+        description: "Cette page est réservée aux administrateurs",
+        variant: "destructive",
+      });
+      navigate("/");
+      return;
+    }
+    loadData();
+  }, [user]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [statsData, offersData] = await Promise.all([
+        api.getDashboardStats(),
+        api.getOffers(),
+      ]);
+      setStats(statsData);
+      setOffers(offersData);
+    } catch (error) {
+      console.error("Failed to load dashboard:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger le tableau de bord",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleValidate = async (offerId: number) => {
+    try {
+      await api.validateOffer(offerId, "validate");
+      toast({
+        title: "Offre validée",
+        description: "L'offre a été validée avec succès",
+      });
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de valider l'offre",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRefuse = async (offerId: number) => {
+    try {
+      await api.validateOffer(offerId, "refuse");
+      toast({
+        title: "Offre refusée",
+        description: "L'offre a été refusée",
+      });
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de refuser l'offre",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Chargement...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <p className="text-destructive">Erreur lors du chargement des statistiques</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  const StatCard = ({
+    title,
+    value,
+    icon: Icon,
+    color,
+  }: {
+    title: string;
+    value: number;
+    icon: any;
+    color: string;
+  }) => (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Icon className={`h-4 w-4 ${color}`} />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <Layout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">Tableau de Bord Administrateur</h1>
+          <p className="text-muted-foreground">
+            Vue d'ensemble des statistiques de la plateforme
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <StatCard
+            title="Total Offres"
+            value={stats.total_offers}
+            icon={Briefcase}
+            color="text-blue-500"
+          />
+          <StatCard
+            title="En Attente"
+            value={stats.pending_offers}
+            icon={FileClock}
+            color="text-yellow-500"
+          />
+          <StatCard
+            title="Validées"
+            value={stats.validated_offers}
+            icon={FileCheck}
+            color="text-green-500"
+          />
+          <StatCard
+            title="Refusées"
+            value={stats.refused_offers}
+            icon={FileX}
+            color="text-red-500"
+          />
+          <StatCard
+            title="Clôturées"
+            value={stats.closed_offers}
+            icon={FolderClosed}
+            color="text-gray-500"
+          />
+          <StatCard
+            title="Total Candidatures"
+            value={stats.total_candidatures}
+            icon={Users}
+            color="text-purple-500"
+          />
+        </div>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Candidatures par Mois</CardTitle>
+            <CardDescription>
+              Évolution des candidatures sur les 12 derniers mois
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={stats.candidatures_by_month}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="count" fill="#8884d8" name="Candidatures" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Gestion des Offres</CardTitle>
+            <CardDescription>
+              {offers.length} offre(s) au total
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="pending">
+              <TabsList>
+                <TabsTrigger value="pending">
+                  En attente ({offers.filter((o) => o.state === "En attente validation").length})
+                </TabsTrigger>
+                <TabsTrigger value="validated">
+                  Validées ({offers.filter((o) => o.state === "Validée").length})
+                </TabsTrigger>
+                <TabsTrigger value="all">
+                  Toutes ({offers.length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pending" className="space-y-4 mt-4">
+                {offers.filter((o) => o.state === "En attente validation").length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Aucune offre en attente</p>
+                ) : (
+                  offers
+                    .filter((o) => o.state === "En attente validation")
+                    .map((offer) => (
+                      <div
+                        key={offer.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{offer.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {offer.organisme} - Contact: {offer.contact_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Déposée le {new Date(offer.date_posted).toLocaleDateString("fr-FR")}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => handleValidate(offer.id)}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Valider
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleRefuse(offer.id)}
+                          >
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Refuser
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                )}
+              </TabsContent>
+
+              <TabsContent value="validated" className="space-y-4 mt-4">
+                {offers.filter((o) => o.state === "Validée").length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Aucune offre validée</p>
+                ) : (
+                  offers
+                    .filter((o) => o.state === "Validée")
+                    .map((offer) => (
+                      <div
+                        key={offer.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{offer.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {offer.organisme} - {offer.candidature_count} candidature(s)
+                          </p>
+                        </div>
+                        <span className="px-3 py-1 rounded bg-green-100 text-green-800 text-sm">
+                          Validée
+                        </span>
+                      </div>
+                    ))
+                )}
+              </TabsContent>
+
+              <TabsContent value="all" className="space-y-4 mt-4">
+                {offers.map((offer) => (
+                  <div
+                    key={offer.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{offer.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {offer.organisme} - {offer.candidature_count} candidature(s)
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-3 py-1 rounded text-sm ${
+                          offer.state === "Validée"
+                            ? "bg-green-100 text-green-800"
+                            : offer.state === "En attente validation"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : offer.state === "Clôturée"
+                            ? "bg-gray-100 text-gray-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {offer.state}
+                      </span>
+                      {offer.state === "En attente validation" && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => handleValidate(offer.id)}
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleRefuse(offer.id)}
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    </Layout>
+  );
+};
+
+export default AdminDashboard;

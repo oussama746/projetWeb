@@ -1,0 +1,114 @@
+==========================================
+  RÉSUMÉ DES COMPTES DE TEST
+==========================================
+
+📍 URL Application : http://192.168.1.55:8080/
+
+------------------------------------------
+🛡️  ADMINISTRATEUR
+------------------------------------------
+Username: admin
+Password: admin123
+Email: admin@stageconnect.fr
+Accès: /admin
+
+Fonctionnalités:
+- Valider/Refuser offres
+- Changer état des offres (même clôturées)
+- Statistiques complètes avec graphiques
+- Vue toutes candidatures
+
+------------------------------------------
+👔 RESPONSABLE IUT
+------------------------------------------
+Username: responsable
+Password: resp123
+Email: responsable@iut-orsay.fr
+Accès: /responsable
+
+Fonctionnalités:
+- Valider/Refuser offres en attente
+- Rechercher toutes les offres
+- Consulter détails offres
+
+------------------------------------------
+🏢 ENTREPRISE (Responsable d'entreprise)
+------------------------------------------
+Username: techcorp
+Password: entr123
+Email: contact@techcorp.com
+Accès: /entreprise
+
+Fonctionnalités:
+- Voir offres de son entreprise (par email)
+- Gérer candidatures (Accepter/Refuser)
+- Voir profils étudiants complets
+- Télécharger CV des candidats
+
+IMPORTANT: Le responsable d'entreprise voit 
+uniquement les offres où contact_email = son email
+
+------------------------------------------
+👨‍🎓 ÉTUDIANT
+------------------------------------------
+Username: etudiant1
+Password: etud123
+Email: jean.dupont@edu.fr
+Nom: Jean Dupont
+Accès: /offres, /etudiant
+
+Fonctionnalités:
+- Consulter offres validées
+- Candidater aux offres
+- Gérer son profil (CV, bio, téléphone)
+- Voir ses candidatures
+
+Autres étudiants:
+- etudiant2 / etud123 (Marie Martin)
+- etudiant3 / etud123 (Pierre Bernard)
+- etudiant4 / etud123 (Sophie Petit)
+- etudiant5 / etud123 (Lucas Moreau)
+
+==========================================
+  WORKFLOW DE TEST
+==========================================
+
+1. DÉPÔT OFFRE (sans compte)
+   → /entreprises
+   → Remplir formulaire
+   → État: "En attente validation"
+   → Email envoyé
+
+2. VALIDATION
+   → Connexion: responsable/resp123
+   → /responsable
+   → Valider offre
+   → État: "Validée"
+   → Email envoyé à l'entreprise
+
+3. CANDIDATURE
+   → Connexion: etudiant1/etud123
+   → /offres
+   → Clic "Candidater"
+   → Emails envoyés (étudiant + entreprise)
+
+4. GESTION CANDIDATURE
+   → S'inscrire avec MÊME EMAIL que l'offre
+   → Connexion entreprise
+   → /entreprise
+   → Voir candidats
+   → Accepter/Refuser
+   → Email envoyé à l'étudiant
+
+==========================================
+  POINTS CLÉS
+==========================================
+
+✓ Email = Lien entre offre et compte entreprise
+✓ Max 5 candidatures par offre
+✓ Clôture automatique à 5 candidats
+✓ Emails automatiques à chaque action
+✓ CV téléchargeables par les entreprises
+✓ Statistiques en temps réel (admin)
+
+==========================================

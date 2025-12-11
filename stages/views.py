@@ -153,13 +153,18 @@ class ManagerOfferDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView
         return is_responsable(self.request.user)
 
 @login_required
-@user_passes_test(is_responsable)
 def validate_or_refuse_offer(request, pk, action):
+    if not request.user.is_staff:
+        messages.error(request, "Seuls les administrateurs peuvent valider ou refuser les offres.")
+        return redirect('home')
+    
     offer = get_object_or_404(StageOffer, pk=pk)
     if action == 'validate':
         offer.state = 'Validée'
+        messages.success(request, f"Offre '{offer.title}' validée avec succès!")
     elif action == 'refuse':
         offer.state = 'Refusée'
+        messages.warning(request, f"Offre '{offer.title}' refusée.")
     offer.save()
     return redirect('manager_offer_list')
 
