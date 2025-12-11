@@ -72,3 +72,14 @@ class StudentProfile(models.Model):
 
     def __str__(self):
         return f"Profil de {self.user.username}"
+
+class Favorite(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
+    offer = models.ForeignKey(StageOffer, on_delete=models.CASCADE, related_name='favorited_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'offer')
+
+    def __str__(self):
+        return f"{self.student.username} - {self.offer.title}"

@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Building2, GraduationCap, Menu, Shield, X, LogOut, User } from "lucide-react";
+import { Briefcase, Building2, GraduationCap, Menu, Shield, X, LogOut, User, Heart } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { ThemeToggle } from "../ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +42,7 @@ const Navbar = () => {
       case "Etudiant":
         return [
           ...baseLinks,
+          { href: "/favoris", label: "Mes favoris", icon: Heart },
           { href: "/etudiant", label: "Mes candidatures", icon: GraduationCap },
         ];
       case "Entreprise":
@@ -102,6 +104,7 @@ const Navbar = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

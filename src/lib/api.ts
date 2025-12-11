@@ -254,6 +254,22 @@ class ApiClient {
       headers: {}, // Let browser set Content-Type for FormData
     });
   }
+
+  async getFavorites(): Promise<StageOffer[]> {
+    return this.request<StageOffer[]>('/favorites/');
+  }
+
+  async toggleFavorite(offerId: number): Promise<{ message: string; is_favorite: boolean }> {
+    return this.request<{ message: string; is_favorite: boolean }>(`/favorites/${offerId}/toggle/`, {
+      method: 'POST',
+    });
+  }
+
+  async removeFavorite(offerId: number): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/favorites/${offerId}/toggle/`, {
+      method: 'POST',
+    });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);
@@ -271,3 +287,5 @@ export const updateCandidatureStatus = (id: number, status: 'Acceptée' | 'Refus
 export const getStats = () => api.getDashboardStats();
 export const getStudentProfile = () => api.getStudentProfile();
 export const updateStudentProfile = (data: FormData) => api.updateStudentProfile(data);
+export const getFavorites = () => api.getFavorites();
+export const toggleFavorite = (offerId: number) => api.toggleFavorite(offerId);

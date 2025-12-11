@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, MapPin, Calendar, Users, Briefcase, Filter } from "lucide-react";
-import { api, StageOffer } from "@/lib/api";
+import { Search, MapPin, Calendar, Users, Briefcase, Filter, Heart } from "lucide-react";
+import { api, type StageOffer } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -23,6 +23,7 @@ const Internships = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -54,7 +55,50 @@ const Internships = () => {
 
   useEffect(() => {
     loadOffers();
+    if (user && user.role === 'Etudiant') {
+      loadFavorites();
+    }
   }, []);
+
+  const loadFavorites = async () => {
+    try {
+      const data = await api.getFavorites();
+      const favoriteIds = new Set(data.map((offer: StageOffer) => offer.id));
+      setFavorites(favoriteIds);
+    } catch (error) {
+      console.error('Failed to load favorites:', error);
+    }
+  };
+
+  const toggleFavorite = async (offerId: number) => {
+    try {
+      const result = await api.toggleFavorite(offerId);
+      
+      if (result.is_favorite) {
+        setFavorites(prev => new Set(prev).add(offerId));
+        toast({
+          title: "Ajouté aux favoris",
+          description: "L'offre a été ajoutée à vos favoris",
+        });
+      } else {
+        setFavorites(prev => {
+          const newFavorites = new Set(prev);
+          newFavorites.delete(offerId);
+          return newFavorites;
+        });
+        toast({
+          title: "Retiré des favoris",
+          description: "L'offre a été retirée de vos favoris",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de modifier les favoris",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,7 +273,19 @@ const Internships = () => {
               <Card key={offer.id} className="flex flex-col">
                 <CardHeader>
                   <div className="flex justify-between items-start mb-2">
-                    <CardTitle className="text-xl">{offer.title}</CardTitle>
+                    <div className="flex items-start gap-2 flex-1">
+                      <CardTitle className="text-xl flex-1">{offer.title}</CardTitle>
+                      {user && user.role === 'Etudiant' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => toggleFavorite(offer.id)}
+                          className={favorites.has(offer.id) ? "text-red-500 hover:text-red-700" : "text-gray-400 hover:text-red-500"}
+                        >
+                          <Heart className={`h-5 w-5 ${favorites.has(offer.id) ? 'fill-current' : ''}`} />
+                        </Button>
+                      )}
+                    </div>
                     {getStateBadge(offer.state)}
                   </div>
                   <CardDescription className="flex items-center gap-2">

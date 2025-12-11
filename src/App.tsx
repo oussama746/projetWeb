@@ -14,6 +14,8 @@ import StudentProfile from "./pages/StudentProfile";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import Favorites from "./pages/Favorites";
+import OfferDetail from "./pages/OfferDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,9 +32,11 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/offres" element={<Internships />} />
+            <Route path="/offres/:id" element={<OfferDetail />} />
             <Route path="/entreprises" element={<Companies />} />
             <Route path="/etudiant" element={<StudentDashboard />} />
             <Route path="/etudiant/profil" element={<StudentProfile />} />
+            <Route path="/favoris" element={<Favorites />} />
             <Route path="/entreprise" element={<CompanyDashboard />} />
             <Route path="/responsable" element={<ManagerDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />

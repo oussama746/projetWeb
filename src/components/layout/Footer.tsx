@@ -3,7 +3,7 @@ import { Briefcase, Mail, MapPin, Phone } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="bg-foreground text-background py-16">
+    <footer className="bg-muted border-t py-16">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
@@ -16,7 +16,7 @@ const Footer = () => {
                 Stage<span className="text-primary">Connect</span>
               </span>
             </Link>
-            <p className="text-background/70 text-sm leading-relaxed">
+            <p className="text-muted-foreground text-sm leading-relaxed">
               La plateforme de référence pour connecter les étudiants aux meilleures opportunités de stage.
             </p>
           </div>
@@ -24,7 +24,7 @@ const Footer = () => {
           {/* Navigation */}
           <div>
             <h4 className="font-semibold mb-4">Navigation</h4>
-            <ul className="space-y-3 text-sm text-background/70">
+            <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link to="/offres" className="hover:text-primary transition-colors">Offres de stage</Link></li>
               <li><Link to="/entreprises" className="hover:text-primary transition-colors">Entreprises</Link></li>
               <li><Link to="/etudiant" className="hover:text-primary transition-colors">Espace étudiant</Link></li>
@@ -35,7 +35,7 @@ const Footer = () => {
           {/* Ressources */}
           <div>
             <h4 className="font-semibold mb-4">Ressources</h4>
-            <ul className="space-y-3 text-sm text-background/70">
+            <ul className="space-y-3 text-sm text-muted-foreground">
               <li><a href="#" className="hover:text-primary transition-colors">Guide du stagiaire</a></li>
               <li><a href="#" className="hover:text-primary transition-colors">FAQ</a></li>
               <li><a href="#" className="hover:text-primary transition-colors">Blog carrière</a></li>
@@ -46,7 +46,7 @@ const Footer = () => {
           {/* Contact */}
           <div>
             <h4 className="font-semibold mb-4">Contact</h4>
-            <ul className="space-y-3 text-sm text-background/70">
+            <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-primary" />
                 contact@stageconnect.fr
@@ -63,7 +63,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-background/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-background/50">
+        <div className="mt-12 pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
           <p>© 2024 StageConnect. Tous droits réservés.</p>
           <div className="flex gap-6">
             <a href="#" className="hover:text-primary transition-colors">Confidentialité</a>

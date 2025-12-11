@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.middleware.csrf import get_token
 from django.http import HttpResponse
 from datetime import timedelta
-from .models import StageOffer, Candidature, StudentProfile
+from .models import StageOffer, Candidature, StudentProfile, Favorite
 from .serializers import StageOfferSerializer, CandidatureSerializer, UserSerializer, StudentProfileSerializer
 from . import emails
 from .pdf_generator import generate_offer_pdf, generate_candidatures_summary_pdf
@@ -563,3 +563,137 @@ def dashboard_stats(request):
         'top_offers': top_offers_data,
         'candidatures_by_status': candidatures_by_status,
     })
+
+
+@api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def favorites_view(request):
+    """
+    GET: Retourne la liste des offres favorites de l'étudiant
+    POST: Ajoute une offre aux favoris (body: {"offer_id": 1})
+    DELETE: Retire une offre des favoris (query param: ?offer_id=1)
+    """
+    user = request.user
+    
+    # Vérifier que c'est un étudiant
+    if not user.groups.filter(name='Etudiant').exists():
+        return Response(
+            {"error": "Seuls les étudiants peuvent gérer des favoris"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    if request.method == 'GET':
+        # Récupérer tous les favoris avec les détails des offres
+        favorites = Favorite.objects.filter(student=user).select_related('offer')
+        offers = [fav.offer for fav in favorites]
+        serializer = StageOfferSerializer(offers, many=True)
+        return Response(serializer.data)
+    
+    elif request.method == 'POST':
+        offer_id = request.data.get('offer_id')
+        if not offer_id:
+            return Response(
+                {"error": "offer_id est requis"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            offer = StageOffer.objects.get(id=offer_id)
+        except StageOffer.DoesNotExist:
+            return Response(
+                {"error": "Offre introuvable"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Créer le favori (ou ignorer si existe déjà grâce à unique_together)
+        favorite, created = Favorite.objects.get_or_create(
+            student=user,
+            offer=offer
+        )
+        
+        if created:
+            return Response(
+                {"message": "Offre ajoutée aux favoris"},
+                status=status.HTTP_201_CREATED
+            )
+        else:
+            return Response(
+                {"message": "Offre déjà dans les favoris"},
+                status=status.HTTP_200_OK
+            )
+    
+    elif request.method == 'DELETE':
+        offer_id = request.query_params.get('offer_id')
+        if not offer_id:
+            return Response(
+                {"error": "offer_id est requis"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            favorite = Favorite.objects.get(student=user, offer_id=offer_id)
+            favorite.delete()
+            return Response(
+                {"message": "Offre retirée des favoris"},
+                status=status.HTTP_200_OK
+            )
+        except Favorite.DoesNotExist:
+            return Response(
+                {"error": "Favori introuvable"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def is_favorite(request, offer_id):
+    """
+    Vérifie si une offre est dans les favoris de l'étudiant
+    """
+    user = request.user
+    
+    if not user.groups.filter(name='Etudiant').exists():
+        return Response({"is_favorite": False})
+    
+    is_fav = Favorite.objects.filter(student=user, offer_id=offer_id).exists()
+    return Response({"is_favorite": is_fav})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_favorite(request, offer_id):
+    """
+    Ajoute ou retire une offre des favoris
+    """
+    user = request.user
+    
+    if not user.groups.filter(name='Etudiant').exists():
+        return Response(
+            {"error": "Seuls les étudiants peuvent mettre des offres en favoris"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    try:
+        offer = StageOffer.objects.get(id=offer_id)
+    except StageOffer.DoesNotExist:
+        return Response(
+            {"error": "Offre non trouvée"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    favorite = Favorite.objects.filter(student=user, offer=offer).first()
+    
+    if favorite:
+        # Retirer des favoris
+        favorite.delete()
+        return Response({
+            "message": "Offre retirée des favoris",
+            "is_favorite": False
+        })
+    else:
+        # Ajouter aux favoris
+        Favorite.objects.create(student=user, offer=offer)
+        return Response({
+            "message": "Offre ajoutée aux favoris",
+            "is_favorite": True
+        })

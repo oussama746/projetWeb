@@ -15,4 +15,7 @@ urlpatterns = [
     path('auth/me/', api_views.current_user, name='api-current-user'),
     path('profile/', api_views.student_profile, name='api-student-profile'),
     path('dashboard/stats/', api_views.dashboard_stats, name='api-dashboard-stats'),
+    path('favorites/', api_views.favorites_view, name='api-favorites'),
+    path('favorites/<int:offer_id>/check/', api_views.is_favorite, name='api-is-favorite'),
+    path('favorites/<int:offer_id>/toggle/', api_views.toggle_favorite, name='api-toggle-favorite'),
 ]
